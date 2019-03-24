@@ -55,6 +55,19 @@ Resources:
           - {"Fn::Sub": [ "sam-task-kitchen-dlq-${StackName}", { StackName: { "Ref": "AWS::StackName" } } ] }
           - {"Ref": DlqTopicName}
 
+  TaskTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: pk
+        AttributeType: S
+      KeySchema:
+      - AttributeName: pk
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
   # --------------------------------------------------------
   # IAM Roles
   LambdaRole:

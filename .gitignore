@@ -2,3 +2,4 @@ build/
 sam.yml
 *.conf
 *.cfg
+*.json
