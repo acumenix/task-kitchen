@@ -2,9 +2,9 @@ ifeq (,$(wildcard $(STACK_CONFIG)))
     $(error STACK_CONFIG ($(STACK_CONFIG)) is not found)
 endif
 
-CODE_S3_BUCKET := $(shell cat $(STACK_CONFIG) | grep CodeS3Bucket | cut -d = -f 2)
-CODE_S3_PREFIX := $(shell cat $(STACK_CONFIG) | grep CodeS3Prefix | cut -d = -f 2)
-STACK_NAME := $(shell cat $(STACK_CONFIG) | grep StackName | cut -d = -f 2)
+CODE_S3_BUCKET := $(shell cat $(STACK_CONFIG) | jq '.["CodeS3Bucket"]' -r )
+CODE_S3_PREFIX := $(shell cat $(STACK_CONFIG) | jq '.["CodeS3Prefix"]' -r )
+STACK_NAME := $(shell cat $(STACK_CONFIG) | jq '.["StackName"]' -r )
 TEMPLATE_FILE=template.yml
 
 all: deploy

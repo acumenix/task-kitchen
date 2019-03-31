@@ -14,6 +14,7 @@ import (
 
 type Task struct {
 	PKey        string    `dynamo:"pk"`
+	SKey        string    `dynamo:"sk"`
 	UserID      string    `dynamo:"user_id"`
 	TaskID      string    `dynamo:"task_id"`
 	CreatedAt   time.Time `dynamo:"created_at"`
@@ -25,9 +26,10 @@ type Task struct {
 }
 
 type TaskManager struct {
-	ssn   *session.Session
-	cfg   *aws.Config
-	table dynamo.Table
+	ssn       *session.Session
+	cfg       *aws.Config
+	table     dynamo.Table
+	tableName string
 }
 
 func NewTaskManager(region, tableName string) TaskManager {
@@ -36,19 +38,20 @@ func NewTaskManager(region, tableName string) TaskManager {
 	db := dynamo.New(session.New(), cfg)
 
 	taskMgr := TaskManager{
-		cfg:   cfg,
-		ssn:   ssn,
-		table: db.Table(tableName),
+		cfg:       cfg,
+		ssn:       ssn,
+		table:     db.Table(tableName),
+		tableName: tableName,
 	}
 
 	return taskMgr
 }
 
-func toPKey(userID string, date time.Time, taskID string) string {
-	return fmt.Sprintf("%s/task/%s/%s", userID, date.Format("20060102"), taskID)
-}
-func toPKeyPrefix(userID string, date time.Time) string {
-	return fmt.Sprintf("%s/task/%s/", userID, date.Format("20060102"))
+func toKey(userID string, date time.Time, taskID string) (string, string) {
+	pk := fmt.Sprintf("%s/task/%s", userID, date.Format("20060102"))
+	sk := taskID
+	return pk, sk
+
 }
 
 func (x TaskManager) NewTask(userID string, date time.Time) *Task {
@@ -59,14 +62,16 @@ func (x TaskManager) NewTask(userID string, date time.Time) *Task {
 		table:     x.table,
 	}
 
-	task.PKey = toPKey(task.UserID, task.CreatedAt, task.TaskID)
+	task.PKey, task.SKey = toKey(task.UserID, task.CreatedAt, task.TaskID)
 
 	return &task
 }
 
 func (x TaskManager) GetTask(userID string, date time.Time, taskID string) (*Task, error) {
 	var task Task
-	if err := x.table.Get("pk", toPKey(userID, date, taskID)).One(&task); err != nil {
+	pk, sk := toKey(userID, date, taskID)
+
+	if err := x.table.Get("pk", pk).Range("sk", dynamo.Equal, sk).One(&task); err != nil {
 		if err.Error() == "dynamo: no item found" {
 			return nil, nil
 		}
@@ -79,11 +84,14 @@ func (x TaskManager) GetTask(userID string, date time.Time, taskID string) (*Tas
 
 func (x TaskManager) FetchTasks(userID string, date time.Time) ([]Task, error) {
 	var tasks []Task
+	pk, _ := toKey(userID, date, "")
 
-	query := x.table.Scan().Filter("begins_with($, ?)", "pk", toPKeyPrefix(userID, date))
+	if err := x.table.Get("pk", pk).All(&tasks); err != nil {
+		if err.Error() == "dynamo: no item found" {
+			return nil, nil
+		}
 
-	if err := query.All(&tasks); err != nil {
-		return nil, errors.Wrapf(err, "Fail to fetch tasks: %s %s", userID, date)
+		return nil, errors.Wrap(err, "Fail to get task")
 	}
 
 	return tasks, nil
@@ -98,7 +106,7 @@ func (x *Task) Save() error {
 }
 
 func (x *Task) Delete() error {
-	if err := x.table.Delete("pk", x.PKey).Run(); err != nil {
+	if err := x.table.Delete("pk", x.PKey).Range("sk", x.SKey).Run(); err != nil {
 		return errors.Wrapf(err, "Fail to delete task: %s", x.PKey)
 	}
 
