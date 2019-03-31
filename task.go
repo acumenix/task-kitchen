@@ -47,14 +47,14 @@ func NewTaskManager(region, tableName string) TaskManager {
 	return taskMgr
 }
 
-func toKey(userID string, date time.Time, taskID string) (string, string) {
+func toTaskKey(userID string, date time.Time, taskID string) (string, string) {
 	pk := fmt.Sprintf("%s/task/%s", userID, date.Format("20060102"))
 	sk := taskID
 	return pk, sk
 
 }
 
-func (x TaskManager) NewTask(userID string, date time.Time) *Task {
+func (x TaskManager) NewTask(userID string, date time.Time) (*Task, error) {
 	task := Task{
 		UserID:    userID,
 		TaskID:    strings.Replace(uuid.New().String(), "-", "", -1),
@@ -62,14 +62,17 @@ func (x TaskManager) NewTask(userID string, date time.Time) *Task {
 		table:     x.table,
 	}
 
-	task.PKey, task.SKey = toKey(task.UserID, task.CreatedAt, task.TaskID)
+	task.PKey, task.SKey = toTaskKey(task.UserID, task.CreatedAt, task.TaskID)
+	if err := task.Save(); err != nil {
+		return nil, err
+	}
 
-	return &task
+	return &task, nil
 }
 
 func (x TaskManager) GetTask(userID string, date time.Time, taskID string) (*Task, error) {
 	var task Task
-	pk, sk := toKey(userID, date, taskID)
+	pk, sk := toTaskKey(userID, date, taskID)
 
 	if err := x.table.Get("pk", pk).Range("sk", dynamo.Equal, sk).One(&task); err != nil {
 		if err.Error() == "dynamo: no item found" {
@@ -84,7 +87,7 @@ func (x TaskManager) GetTask(userID string, date time.Time, taskID string) (*Tas
 
 func (x TaskManager) FetchTasks(userID string, date time.Time) ([]Task, error) {
 	var tasks []Task
-	pk, _ := toKey(userID, date, "")
+	pk, _ := toTaskKey(userID, date, "")
 
 	if err := x.table.Get("pk", pk).All(&tasks); err != nil {
 		if err.Error() == "dynamo: no item found" {
@@ -112,4 +115,9 @@ func (x *Task) Delete() error {
 
 	x.deleted = true
 	return nil
+}
+
+func (x *Task) StartPomodoro() (*Pomodoro, error) {
+
+	return nil, nil
 }

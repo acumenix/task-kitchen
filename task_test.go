@@ -16,8 +16,7 @@ func TestNewTask(t *testing.T) {
 	uid1 := uuid.New().String()
 	now := time.Now()
 
-	t1 := mgr.NewTask(uid1, now)
-	err := t1.Save()
+	t1, err := mgr.NewTask(uid1, now)
 	require.NoError(t, err)
 
 	t2, err := mgr.GetTask(uid1, now, t1.TaskID)
@@ -38,11 +37,11 @@ func TestFetchTasks(t *testing.T) {
 	uid1 := uuid.New().String()
 	now := time.Now()
 
-	t1 := mgr.NewTask(uid1, now)
-	require.NoError(t, t1.Save())
+	t1, err := mgr.NewTask(uid1, now)
+	require.NoError(t, err)
 
-	t2 := mgr.NewTask(uid1, now)
-	require.NoError(t, t2.Save())
+	t2, err := mgr.NewTask(uid1, now)
+	require.NoError(t, err)
 
 	tset, err := mgr.FetchTasks(uid1, now)
 	require.NoError(t, err)
@@ -51,4 +50,48 @@ func TestFetchTasks(t *testing.T) {
 
 	assert.NoError(t, t1.Delete())
 	assert.NoError(t, t2.Delete())
+}
+
+func TestPomodoro(t *testing.T) {
+	mgr := main.NewTaskManager(testCfg.TableRegion, testCfg.TableName)
+	uid1 := uuid.New().String()
+	now := time.Now()
+
+	t1, err := mgr.NewTask(uid1, now)
+	require.NoError(t, err)
+	t2, err := mgr.NewTask(uid1, now)
+	require.NoError(t, err)
+
+	// Create a pomodoro
+	p1, err := main.NewPomodoro(t1)
+	require.NoError(t, err)
+	assert.Equal(t, "started", p1.Status)
+
+	err = p1.Finish()
+	require.NoError(t, err)
+
+	// Create another pomodoro
+	p2, err := main.NewPomodoro(t1)
+	require.NoError(t, err)
+
+	// Create yet another pomodoro for t2
+	p3, err := main.NewPomodoro(t2)
+	require.NoError(t, err)
+
+	// Check fetch action and isolation
+	pset, err := main.FetchPomodoros(t1)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(pset))
+	assert.True(t, pset[0].PomodoroID == p1.PomodoroID || pset[1].PomodoroID == p1.PomodoroID)
+
+	for _, p := range pset {
+		assert.NotEqual(t, p3.PomodoroID, p.PomodoroID)
+	}
+
+	// Teardown
+	require.NoError(t, t1.Delete())
+	require.NoError(t, t2.Delete())
+	require.NoError(t, p1.Delete())
+	require.NoError(t, p2.Delete())
+	require.NoError(t, p3.Delete())
 }
