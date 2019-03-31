@@ -44,7 +44,7 @@ Resources:
   ApiGW:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: prod
+      StageName: api
 
   DLQ:
     Type: AWS::SNS::Topic

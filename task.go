@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/google/uuid"
 	"github.com/guregu/dynamo"
 	"github.com/pkg/errors"
@@ -21,40 +19,18 @@ type Task struct {
 	Title       string    `dynamo:"title"`
 	TomatoNum   string    `dynamo:"tomato_num"`
 	Description string    `dynamo:"description"`
-	table       dynamo.Table
-	deleted     bool
-}
 
-type TaskManager struct {
-	ssn       *session.Session
-	cfg       *aws.Config
-	table     dynamo.Table
-	tableName string
-}
-
-func NewTaskManager(region, tableName string) TaskManager {
-	cfg := &aws.Config{Region: aws.String(region)}
-	ssn := session.Must(session.NewSession(cfg))
-	db := dynamo.New(session.New(), cfg)
-
-	taskMgr := TaskManager{
-		cfg:       cfg,
-		ssn:       ssn,
-		table:     db.Table(tableName),
-		tableName: tableName,
-	}
-
-	return taskMgr
+	table   dynamo.Table
+	deleted bool
 }
 
 func toTaskKey(userID string, date time.Time, taskID string) (string, string) {
 	pk := fmt.Sprintf("%s/task/%s", userID, date.Format("20060102"))
 	sk := taskID
 	return pk, sk
-
 }
 
-func (x TaskManager) NewTask(userID string, date time.Time) (*Task, error) {
+func (x KitchenManager) NewTask(userID string, date time.Time) (*Task, error) {
 	task := Task{
 		UserID:    userID,
 		TaskID:    strings.Replace(uuid.New().String(), "-", "", -1),
@@ -70,7 +46,7 @@ func (x TaskManager) NewTask(userID string, date time.Time) (*Task, error) {
 	return &task, nil
 }
 
-func (x TaskManager) GetTask(userID string, date time.Time, taskID string) (*Task, error) {
+func (x KitchenManager) GetTask(userID string, date time.Time, taskID string) (*Task, error) {
 	var task Task
 	pk, sk := toTaskKey(userID, date, taskID)
 
@@ -85,7 +61,7 @@ func (x TaskManager) GetTask(userID string, date time.Time, taskID string) (*Tas
 	return &task, nil
 }
 
-func (x TaskManager) FetchTasks(userID string, date time.Time) ([]Task, error) {
+func (x KitchenManager) FetchTasks(userID string, date time.Time) ([]Task, error) {
 	var tasks []Task
 	pk, _ := toTaskKey(userID, date, "")
 
@@ -115,9 +91,4 @@ func (x *Task) Delete() error {
 
 	x.deleted = true
 	return nil
-}
-
-func (x *Task) StartPomodoro() (*Pomodoro, error) {
-
-	return nil, nil
 }

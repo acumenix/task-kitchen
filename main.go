@@ -22,7 +22,58 @@ func main() {
 	logger.SetLevel(logrus.InfoLevel)
 
 	r := gin.Default()
-	r.GET("/:user/:", func(c *gin.Context) {
+	r.GET("/v1/:user/:date/", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	// Task Endpoint
+	r.GET("/v1/:user/:date/task", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	r.POST("/v1/:user/:date/task", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	r.PUT("/v1/:user/:date/task/:task_id", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	r.DELETE("/v1/:user/:date/task/:task_id", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	// Pomodoro Endpoint
+	r.GET("/v1/:user/:date/pomodoros/:task_id", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	r.POST("/v1/:user/:date/pomodoros/:task_id", func(c *gin.Context) {
+		logger.WithField("param", c.Params).Info("Request")
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
+	r.PUT("/v1/:user/:date/pomodoros/:task_id/:pomodoro_id", func(c *gin.Context) {
 		logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "pong",

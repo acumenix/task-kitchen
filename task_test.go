@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewTask(t *testing.T) {
-	mgr := main.NewTaskManager(testCfg.TableRegion, testCfg.TableName)
+	mgr := main.NewKitchenManager(testCfg.TableRegion, testCfg.TableName)
 	uid1 := uuid.New().String()
 	now := time.Now()
 
@@ -33,7 +33,7 @@ func TestNewTask(t *testing.T) {
 }
 
 func TestFetchTasks(t *testing.T) {
-	mgr := main.NewTaskManager(testCfg.TableRegion, testCfg.TableName)
+	mgr := main.NewKitchenManager(testCfg.TableRegion, testCfg.TableName)
 	uid1 := uuid.New().String()
 	now := time.Now()
 
@@ -53,7 +53,7 @@ func TestFetchTasks(t *testing.T) {
 }
 
 func TestPomodoro(t *testing.T) {
-	mgr := main.NewTaskManager(testCfg.TableRegion, testCfg.TableName)
+	mgr := main.NewKitchenManager(testCfg.TableRegion, testCfg.TableName)
 	uid1 := uuid.New().String()
 	now := time.Now()
 
