@@ -4,3 +4,4 @@ sam.yml
 *.cfg
 *.json
 .DS_Store
+node_modules/

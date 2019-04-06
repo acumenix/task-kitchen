@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 
 	"github.com/gin-gonic/gin"
 	kitchen "github.com/m-mizutani/task-kitchen"
@@ -19,6 +19,7 @@ func main() {
 	logger.SetLevel(logrus.InfoLevel)
 	kitchen.Logger = logger
 
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	v1 := r.Group("/v1")
 	kitchen.SetupRouter(v1, os.Getenv("AWS_REGION"), os.Getenv("TABLE_NAME"))
