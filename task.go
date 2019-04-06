@@ -1,4 +1,4 @@
-package main
+package kitchen
 
 import (
 	"fmt"
@@ -11,14 +11,14 @@ import (
 )
 
 type Task struct {
-	PKey        string    `dynamo:"pk"`
-	SKey        string    `dynamo:"sk"`
-	UserID      string    `dynamo:"user_id"`
-	TaskID      string    `dynamo:"task_id"`
-	CreatedAt   time.Time `dynamo:"created_at"`
-	Title       string    `dynamo:"title"`
-	TomatoNum   string    `dynamo:"tomato_num"`
-	Description string    `dynamo:"description"`
+	PKey        string    `dynamo:"pk" json:"-"`
+	SKey        string    `dynamo:"sk" json:"-"`
+	UserID      string    `dynamo:"user_id" json:"user_id"`
+	TaskID      string    `dynamo:"task_id" json:"task_id"`
+	CreatedAt   time.Time `dynamo:"created_at" json:"created_at"`
+	Title       string    `dynamo:"title" json:"title"`
+	TomatoNum   string    `dynamo:"tomato_num" json:"tomato_num"`
+	Description string    `dynamo:"description" json:"description"`
 
 	table   dynamo.Table
 	deleted bool

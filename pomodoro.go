@@ -1,4 +1,4 @@
-package main
+package kitchen
 
 import (
 	"fmt"
@@ -66,7 +66,7 @@ func fetchPomodoros(task *Task) ([]Pomodoro, error) {
 
 func (x *Pomodoro) Finish() error {
 	if x.deleted {
-		logger.WithField("pomodoro", x).Fatal("Already deleted")
+		Logger.WithField("pomodoro", x).Fatal("Already deleted")
 	}
 
 	x.FinishedAt = time.Now().UTC()
@@ -81,7 +81,7 @@ func (x *Pomodoro) Finish() error {
 
 func (x *Pomodoro) Delete() error {
 	if x.deleted {
-		logger.WithField("pomodoro", x).Fatal("Already deleted")
+		Logger.WithField("pomodoro", x).Fatal("Already deleted")
 	}
 
 	if err := x.table.Delete("pk", x.PKey).Range("sk", x.SKey).Run(); err != nil {

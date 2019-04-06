@@ -24,22 +24,70 @@ Resources:
       Runtime: go1.x
       CodeUri: build
       Handler: main
-      Timeout: 60
+      Timeout: 30
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: TaskTable
       Role:
         Fn::If: [ LambdaRoleRequired, {"Fn::GetAtt": LambdaRole.Arn}, {Ref: LambdaRoleArn} ]
-      DeadLetterQueue:
-        Type: SNS
-        TargetArn:
-          Ref: DLQ
-      MemorySize: 1024
       Events:
-        Test:
+        GetAll:
           Type: Api
           Properties:
-            Path: /
             Method: get
-            RestApiId:
-              Ref: ApiGW
+            Path: /v1/{user}/{date}
+            RestApiId: {"Ref": "ApiGW"}
+
+        GetTasks:
+          Type: Api
+          Properties:
+            Method: get
+            Path: /v1/{user}/{date}/task
+            RestApiId: {"Ref": "ApiGW"}
+        CreateTask:
+          Type: Api
+          Properties:
+            Method: post
+            Path: /v1/{user}/{date}/task
+            RestApiId: {"Ref": "ApiGW"}
+        UpdateTask:
+          Type: Api
+          Properties:
+            Method: put
+            Path: /v1/{user}/{date}/task/{task_id}
+            RestApiId: {"Ref": "ApiGW"}
+        DeleteTask:
+          Type: Api
+          Properties:
+            Method: delete
+            Path: /v1/{user}/{date}/task/{task_id}
+            RestApiId: {"Ref": "ApiGW"}
+
+        GetPomodoro:
+          Type: Api
+          Properties:
+            Method: get
+            Path: /v1/{user}/{date}/pomodoro
+            RestApiId: {"Ref": "ApiGW"}
+        CreatePomodoro:
+          Type: Api
+          Properties:
+            Method: post
+            Path: /v1/{user}/{date}/pomodoro/{task_id}
+            RestApiId: {"Ref": "ApiGW"}
+        UpdatePomodoro:
+          Type: Api
+          Properties:
+            Method: put
+            Path: /v1/{user}/{date}/pomodoro/{task_id}/{pomodoro_id}
+            RestApiId: {"Ref": "ApiGW"}
+        DeletePomodoro:
+          Type: Api
+          Properties:
+            Method: delete
+            Path: /v1/{user}/{date}/pomodoro/{task_id}/{pomodoro_id}
+            RestApiId: {"Ref": "ApiGW"}
 
   ApiGW:
     Type: AWS::Serverless::Api
@@ -98,3 +146,23 @@ Resources:
                   - sns:Publish
                 Resource:
                   - Ref: DLQ
+        - PolicyName: "TableAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:BatchGet*
+                  - dynamodb:DescribeStream
+                  - dynamodb:DescribeTable
+                  - dynamodb:Get*
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWrite*
+                  - dynamodb:CreateTable
+                  - dynamodb:Delete*
+                  - dynamodb:Update*
+                  - dynamodb:PutItem
+                Resource:
+                  - Fn::GetAtt: TaskTable.Arn
+                  - Fn::Sub: [ "${TableArn}/index/*", { TableArn: { "Fn::GetAtt": TaskTable.Arn } } ]

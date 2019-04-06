@@ -1,9 +1,10 @@
-package main
+package kitchen
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
+	"github.com/sirupsen/logrus"
 )
 
 type KitchenManager struct {
@@ -21,4 +22,10 @@ func newKitchenManager(region, tableName string) KitchenManager {
 	}
 
 	return kitchenMgr
+}
+
+var Logger *logrus.Logger
+
+func init() {
+	Logger = logrus.New()
 }

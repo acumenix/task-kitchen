@@ -13,7 +13,7 @@ clean:
 	rm build/main
 
 build/main: *.go
-	env GOARCH=amd64 GOOS=linux go build -o build/main
+	env GOARCH=amd64 GOOS=linux go build -o build/main ./lambda
 
 sam.yml: $(TEMPLATE_FILE) build/main
 	aws cloudformation package \
