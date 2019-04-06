@@ -21,10 +21,9 @@ func getParam(params gin.Params, key string) string {
 	return ""
 }
 
-func BuildRouter(awsRegion, tableName string) *gin.Engine {
+func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	mgr := newKitchenManager(awsRegion, tableName)
 
-	r := gin.Default()
 	r.GET("/v1/:user/:date/", func(c *gin.Context) {
 		user := getParam(c.Params, "user")
 		date := getParam(c.Params, "date")
@@ -102,6 +101,4 @@ func BuildRouter(awsRegion, tableName string) *gin.Engine {
 			"message": "delete pomodoro",
 		})
 	})
-
-	return r
 }

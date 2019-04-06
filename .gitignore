@@ -3,3 +3,4 @@ sam.yml
 *.conf
 *.cfg
 *.json
+.DS_Store

@@ -120,6 +120,28 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
 
+  StaticContentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+  StaticContentsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: StaticContentsBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+            - "s3:GetObject"
+            Effect: "Allow"
+            Resource:
+              - {"Fn::Sub": [ "arn:aws:s3:::${BucketName}/*", { BucketName: { "Ref": "StaticContentsBucket" } } ] }
+            Principal: "*"
+
+
+
   # --------------------------------------------------------
   # IAM Roles
   LambdaRole:
