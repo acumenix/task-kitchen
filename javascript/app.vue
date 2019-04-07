@@ -5,5 +5,12 @@
 </template>
 <script>
 </script>
-<style lang="scss" scoped>
+<style lang="css" scoped>
+.g-content {
+  background-color: #eee;
+}
+.title {
+  font-size: 24px;
+  font-weight: bold;
+}
 </style>

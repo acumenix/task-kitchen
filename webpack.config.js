@@ -11,30 +11,21 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.vue$/,
+        loader: "vue-loader"
+      },
+      {
         test: /\.js$/,
-        exclude: /node_modules/,
         loader: "babel-loader"
       },
       {
-        test: /\.(css|sass|scss)$/,
-        loader: "sass-loader",
-        options: {
-          outputStyle: "expanded",
-          sourceMap: true
-        }
-      },
-      {
-        test: /\.(jpg|png|json|svg)$/,
-        loaders: "url-loader"
-      },
-      {
-        test: /\.vue$/,
-        loader: "vue-loader"
+        test: /\.css$/,
+        use: ["vue-style-loader", "css-loader"]
       }
     ]
   },
   resolve: {
-    extensions: [".js", "json", "jsx"],
+    extensions: [".js", "json", "jsx", "vue"],
     alias: {
       vue$: "vue/dist/vue.esm.js"
     }
@@ -45,8 +36,5 @@ module.exports = {
       "/api": "http://localhost:8080"
     }
   },
-  plugins: [
-    // make sure to include the plugin!
-    new VueLoaderPlugin()
-  ]
+  plugins: [new VueLoaderPlugin()]
 };

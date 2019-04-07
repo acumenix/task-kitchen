@@ -2,9 +2,9 @@ import "babel-polyfill";
 
 import Vue from "vue";
 
-import App from "./App.vue";
+import App from "./app.vue";
 
 new Vue({
-  el: "#app",
+  el: "#task",
   render: h => h(App)
 });
