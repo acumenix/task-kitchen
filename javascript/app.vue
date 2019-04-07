@@ -1,9 +1,24 @@
 <template>
   <div class="g-content">
-    <h2 class="title">Waiwai</h2>
+    <tasks></tasks>
+    <chores></chores>
   </div>
 </template>
 <script>
+import tasks from "./tasks.vue";
+import chores from "./chores.vue";
+
+export default {
+  components: {
+    tasks,
+    chores
+  },
+  data() {
+    return {
+      greeting: "Hello"
+    };
+  }
+};
 </script>
 <style lang="css" scoped>
 .g-content {
