@@ -1,4 +1,4 @@
-package kitchen
+package api
 
 import (
 	"time"
@@ -24,7 +24,7 @@ func getParam(params gin.Params, key string) string {
 func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	mgr := newKitchenManager(awsRegion, tableName)
 
-	r.GET("/v1/:user/:date/", func(c *gin.Context) {
+	r.GET("/:user/:date/", func(c *gin.Context) {
 		user := getParam(c.Params, "user")
 		date := getParam(c.Params, "date")
 		ts, err := time.Parse("2006-01-02", date)
@@ -45,28 +45,28 @@ func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	})
 
 	// Task Endpoint
-	r.GET("/v1/:user/:date/task", func(c *gin.Context) {
+	r.GET("/:user/:date/task", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "get tasks",
 		})
 	})
 
-	r.POST("/v1/:user/:date/task", func(c *gin.Context) {
+	r.POST("/:user/:date/task", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "create a task",
 		})
 	})
 
-	r.PUT("/v1/:user/:date/task/:task_id", func(c *gin.Context) {
+	r.PUT("/:user/:date/task/:task_id", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
-	r.DELETE("/v1/:user/:date/task/:task_id", func(c *gin.Context) {
+	r.DELETE("/:user/:date/task/:task_id", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "pong",
@@ -74,28 +74,28 @@ func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	})
 
 	// Pomodoro Endpoint
-	r.GET("/v1/:user/:date/pomodoro/:task_id", func(c *gin.Context) {
+	r.GET("/:user/:date/pomodoro/:task_id", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
-	r.POST("/v1/:user/:date/pomodoro/:task_id", func(c *gin.Context) {
+	r.POST("/:user/:date/pomodoro/:task_id", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
-	r.PUT("/v1/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
+	r.PUT("/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
-	r.DELETE("/v1/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
+	r.DELETE("/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
 		Logger.WithField("param", c.Params).Info("Request")
 		c.JSON(200, gin.H{
 			"message": "delete pomodoro",

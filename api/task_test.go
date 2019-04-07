@@ -1,4 +1,4 @@
-package kitchen_test
+package api_test
 
 import (
 	"testing"

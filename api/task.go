@@ -1,4 +1,4 @@
-package kitchen
+package api
 
 import (
 	"fmt"
