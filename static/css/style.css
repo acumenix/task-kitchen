@@ -1,0 +1,58 @@
+#header {
+  background-color: #dd4643;
+  margin: 0px 0px;
+  padding: 20px 20px 20px 20px;
+  height: 24px;
+}
+
+#header #title {
+  font-family: "SF Pro Text", "SF Pro Icons", "Helvetica Neue", "Helvetica",
+    "Arial", sans-serif;
+  font-weight: bold;
+  font-size: 14pt;
+  color: #ddd;
+  float: left;
+}
+
+div {
+  font-family: "Roboto", arial, sans-serif;
+}
+
+div#main {
+  margin-top: 15px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-bottom: 15px;
+  display: grid;
+}
+div#header div#menu {
+}
+
+div.data-container {
+  width: 640px;
+  margin: 25px auto;
+  padding: 15px;
+  background-color: #fff;
+  box-shadow: 0 0 12px #ddd;
+}
+
+div.data-container h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #444;
+  line-height: 1.5em;
+  margin: 10px 10px;
+}
+
+button {
+  background-color: #c6d8d3;
+  border: none;
+  color: #5a5555;
+  padding: 5px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 8px 4px;
+  cursor: pointer;
+}

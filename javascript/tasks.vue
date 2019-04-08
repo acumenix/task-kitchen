@@ -1,45 +1,43 @@
 <template>
-  <div class="task-container">
+  <div class="data-container">
     <h2 class="title">Tasks</h2>
+    <div>{{ errorMessage }}</div>
     <div class="task" v-for="task in tasks" v-bind:key="task.task_id">{{ task.task_id }}</div>
     <button v-on:click="newTask">New task</button>
   </div>
 </template>
 <script>
 import axios from "axios";
+import dateFormat from "dateformat";
 
 const user = "mizutani";
+const now = new Date();
+const today = dateFormat(now, "yyyy-mm-dd");
+
 const taskData = {
-  tasks: []
+  tasks: [],
+  errorMessage: ""
 };
 
 function newTask() {
-  const today = "2019-04-07";
-
   axios
-    .post(`/api/v1/$${user}/${today}/task`)
+    .post(`/api/v1/${user}/${today}/task`)
     .then(function(response) {
-      // handle success
       taskData.tasks.push(response.data.results);
       console.log(response);
     })
     .catch(function(error) {
-      // handle error
       console.log(error);
-    })
-    .then(function() {
-      // always executed
+      taskData.errorMessage = "Error: " + error;
     });
 }
 
 function fetchTask() {
-  const today = "2019-04-07";
-
   axios
-    .get(`/api/v1/$${user}/${today}/task`)
+    .get(`/api/v1/${user}/${today}/task`)
     .then(function(response) {
       // handle success
-      if (response.data.results !== undefined) {
+      if (response.data.results !== null) {
         taskData.tasks = taskData.tasks.concat(response.data.results);
       }
       console.log(response);
@@ -47,9 +45,7 @@ function fetchTask() {
     .catch(function(error) {
       // handle error
       console.log(error);
-    })
-    .then(function() {
-      // always executed
+      taskData.errorMessage = "Error: " + error;
     });
 }
 

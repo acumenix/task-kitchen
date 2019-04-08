@@ -1,15 +1,18 @@
 <template>
-  <div class="g-content">
+  <div id="main">
+    <controller></controller>
     <tasks></tasks>
     <chores></chores>
   </div>
 </template>
 <script>
+import controller from "./controller.vue";
 import tasks from "./tasks.vue";
 import chores from "./chores.vue";
 
 export default {
   components: {
+    controller,
     tasks,
     chores
   },
@@ -21,11 +24,4 @@ export default {
 };
 </script>
 <style lang="css" scoped>
-.g-content {
-  background-color: #eee;
-}
-.title {
-  font-size: 24px;
-  font-weight: bold;
-}
 </style>

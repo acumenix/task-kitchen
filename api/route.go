@@ -40,71 +40,18 @@ func getSpace(params gin.Params) (user string, ts time.Time, err error) {
 func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	mgr := newKitchenManager(awsRegion, tableName)
 
-	r.GET("/:user/:date/", func(c *gin.Context) {
-		user, ts, err := getSpace(c.Params)
-		if err != nil {
-			c.JSON(400, Response{err.Error(), nil})
-			return
-		}
-
-		tasks, err := mgr.FetchTasks(user, ts)
-		if err != nil {
-			Logger.WithError(err).Error("Fail to fetch tasks")
-			c.JSON(500, Response{"Internal server error", nil})
-			return
-		}
-
-		c.JSON(200, Response{"", tasks})
-	})
-
 	// Task Endpoint
 	r.GET("/:user/:date/task", func(c *gin.Context) {
-		user, ts, err := getSpace(c.Params)
-		if err != nil {
-			c.JSON(400, Response{err.Error(), nil})
-			return
-		}
-
-		tasks, err := mgr.FetchTasks(user, ts)
-		if err != nil {
-			Logger.WithError(err).Error("Fail to fetch tasks")
-			c.JSON(500, Response{"Internal server error", nil})
-			return
-		}
-
-		c.JSON(200, Response{"", tasks})
+		getTasksHandler(c, &mgr)
 	})
-
 	r.POST("/:user/:date/task", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		user, ts, err := getSpace(c.Params)
-		if err != nil {
-			c.JSON(400, Response{err.Error(), nil})
-			return
-		}
-
-		task, err := mgr.NewTask(user, ts)
-		if err != nil {
-			Logger.WithError(err).Error("Fail to create a task")
-			c.JSON(500, Response{"Internal server error", nil})
-			return
-		}
-
-		c.JSON(200, Response{"ok", task})
+		createTaskHandler(c, &mgr)
 	})
-
 	r.PUT("/:user/:date/task/:task_id", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		updateTaskHandler(c, &mgr)
 	})
-
 	r.DELETE("/:user/:date/task/:task_id", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		deleteTaskHandler(c, &mgr)
 	})
 
 	// Pomodoro Endpoint
