@@ -24,6 +24,9 @@ function newChore() {}
 export default {
   data() {
     return choreData;
+  },
+  methods: {
+    newChore: newChore
   }
 };
 </script>

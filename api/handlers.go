@@ -39,6 +39,15 @@ func createTaskHandler(c *gin.Context, mgr *KitchenManager) {
 		return
 	}
 
+	var reqTask Task
+	if err := c.ShouldBindJSON(&reqTask); err == nil && reqTask.Title != "" {
+		task.Title = reqTask.Title
+		if err := task.Save(); err != nil {
+			Logger.WithField("task", task).WithError(err).Error("Fail to update title of task")
+			c.JSON(500, Response{"Internal server error", nil})
+		}
+	}
+
 	c.JSON(200, Response{"ok", task})
 }
 

@@ -17,7 +17,7 @@ type Task struct {
 	TaskID      string    `dynamo:"task_id" json:"task_id"`
 	CreatedAt   time.Time `dynamo:"created_at" json:"created_at"`
 	Title       string    `dynamo:"title" json:"title"`
-	TomatoNum   string    `dynamo:"tomato_num" json:"tomato_num"`
+	TomatoNum   int64     `dynamo:"tomato_num" json:"tomato_num"`
 	Description string    `dynamo:"description" json:"description"`
 
 	table   dynamo.Table
@@ -36,6 +36,7 @@ func (x KitchenManager) NewTask(userID string, date time.Time) (*Task, error) {
 		TaskID:    strings.Replace(uuid.New().String(), "-", "", -1),
 		CreatedAt: date,
 		table:     x.table,
+		TomatoNum: 1,
 	}
 
 	task.PKey, task.SKey = toTaskKey(task.UserID, task.CreatedAt, task.TaskID)
@@ -57,6 +58,8 @@ func (x KitchenManager) GetTask(userID string, date time.Time, taskID string) (*
 
 		return nil, errors.Wrap(err, "Fail to get task")
 	}
+
+	task.table = x.table
 
 	return &task, nil
 }

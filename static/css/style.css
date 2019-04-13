@@ -37,22 +37,9 @@ div.data-container {
 }
 
 div.data-container h2 {
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
   color: #444;
   line-height: 1.5em;
   margin: 10px 10px;
-}
-
-button {
-  background-color: #c6d8d3;
-  border: none;
-  color: #5a5555;
-  padding: 5px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 14px;
-  margin: 8px 4px;
-  cursor: pointer;
 }
