@@ -5,6 +5,11 @@ endif
 CODE_S3_BUCKET := $(shell cat $(STACK_CONFIG) | jq '.["CodeS3Bucket"]' -r )
 CODE_S3_PREFIX := $(shell cat $(STACK_CONFIG) | jq '.["CodeS3Prefix"]' -r )
 STACK_NAME := $(shell cat $(STACK_CONFIG) | jq '.["StackName"]' -r )
+
+SERVICE_DOMAIN_NAME := $(shell cat $(STACK_CONFIG) | jq '.["ServiceDomainName"]' -r )
+S3_HOSTED_ZONE_ID := $(shell cat $(STACK_CONFIG) | jq '.["S3HostedZoneID"]' -r )
+REGION := $(shell cat $(STACK_CONFIG) | jq '.["Region"]' -r )
+
 TEMPLATE_FILE=template.yml
 
 all: deploy
@@ -12,20 +17,28 @@ all: deploy
 clean:
 	rm build/main
 
-build/main: *.go
+build/main: api/*.go lambda/*.go
 	env GOARCH=amd64 GOOS=linux go build -o build/main ./lambda
 
 sam.yml: $(TEMPLATE_FILE) build/main
-	aws cloudformation package \
+	aws --region $(REGION) cloudformation package \
 		--template-file $(TEMPLATE_FILE) \
 		--s3-bucket $(CODE_S3_BUCKET) \
 		--s3-prefix $(CODE_S3_PREFIX) \
 		--output-template-file sam.yml
 
 deploy: sam.yml
-	aws cloudformation deploy \
+	aws --region $(REGION) cloudformation deploy \
 		--template-file sam.yml \
 		--stack-name $(STACK_NAME) \
-		--capabilities CAPABILITY_IAM
+		--capabilities CAPABILITY_IAM \
+ 		--parameter-overrides \
+		  ServiceDomainName=$(SERVICE_DOMAIN_NAME) \
+		  S3HostedZoneID=$(S3_HOSTED_ZONE_ID) \
+		  Region=$(REGION)
+	npx webpack --optimize-minimize --config ./webpack.config.js
+	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/
 
-# 		--parameter-overrides $(PARAMETERS)
+sync:
+	npx webpack --optimize-minimize --config ./webpack.config.js
+	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/

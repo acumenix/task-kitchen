@@ -8,12 +8,18 @@ Parameters:
   LambdaRoleArn:
     Type: String
     Default: ""
+  ServiceDomainName:
+    Type: String
+  S3HostedZoneID:
+    Type: String
+  Region:
+    Type: String
 
 Conditions:
   LambdaRoleRequired:
-    Fn::Equals: [ { Ref: LambdaRoleArn }, "" ]
+    Fn::Equals: [{ Ref: LambdaRoleArn }, ""]
   IsDefaultDLQName:
-    Fn::Equals: [ { Ref: DlqTopicName }, "" ]
+    Fn::Equals: [{ Ref: DlqTopicName }, ""]
 
 Resources:
   # --------------------------------------------------------
@@ -30,64 +36,69 @@ Resources:
           TABLE_NAME:
             Ref: TaskTable
       Role:
-        Fn::If: [ LambdaRoleRequired, {"Fn::GetAtt": LambdaRole.Arn}, {Ref: LambdaRoleArn} ]
+        Fn::If:
+          [
+            LambdaRoleRequired,
+            { "Fn::GetAtt": LambdaRole.Arn },
+            { Ref: LambdaRoleArn },
+          ]
       Events:
         GetAll:
           Type: Api
           Properties:
             Method: get
             Path: /v1/{user}/{date}
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
 
         GetTasks:
           Type: Api
           Properties:
             Method: get
             Path: /v1/{user}/{date}/task
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
         CreateTask:
           Type: Api
           Properties:
             Method: post
             Path: /v1/{user}/{date}/task
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
         UpdateTask:
           Type: Api
           Properties:
             Method: put
             Path: /v1/{user}/{date}/task/{task_id}
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
         DeleteTask:
           Type: Api
           Properties:
             Method: delete
             Path: /v1/{user}/{date}/task/{task_id}
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
 
         GetPomodoro:
           Type: Api
           Properties:
             Method: get
             Path: /v1/{user}/{date}/pomodoro
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
         CreatePomodoro:
           Type: Api
           Properties:
             Method: post
             Path: /v1/{user}/{date}/pomodoro/{task_id}
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
         UpdatePomodoro:
           Type: Api
           Properties:
             Method: put
             Path: /v1/{user}/{date}/pomodoro/{task_id}/{pomodoro_id}
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
         DeletePomodoro:
           Type: Api
           Properties:
             Method: delete
             Path: /v1/{user}/{date}/pomodoro/{task_id}/{pomodoro_id}
-            RestApiId: {"Ref": "ApiGW"}
+            RestApiId: { "Ref": "ApiGW" }
 
   ApiGW:
     Type: AWS::Serverless::Api
@@ -100,22 +111,28 @@ Resources:
       TopicName:
         Fn::If:
           - IsDefaultDLQName
-          - {"Fn::Sub": [ "sam-task-kitchen-dlq-${StackName}", { StackName: { "Ref": "AWS::StackName" } } ] }
-          - {"Ref": DlqTopicName}
+          - {
+              "Fn::Sub":
+                [
+                  "sam-task-kitchen-dlq-${StackName}",
+                  { StackName: { "Ref": "AWS::StackName" } },
+                ],
+            }
+          - { "Ref": DlqTopicName }
 
   TaskTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-      - AttributeName: pk
-        AttributeType: S
-      - AttributeName: sk
-        AttributeType: S
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
       KeySchema:
-      - AttributeName: pk
-        KeyType: HASH
-      - AttributeName: sk
-        KeyType: RANGE
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
@@ -123,6 +140,8 @@ Resources:
   StaticContentsBucket:
     Type: AWS::S3::Bucket
     Properties:
+      BucketName:
+        Ref: ServiceDomainName
       WebsiteConfiguration:
         IndexDocument: index.html
 
@@ -134,13 +153,44 @@ Resources:
       PolicyDocument:
         Statement:
           - Action:
-            - "s3:GetObject"
+              - "s3:GetObject"
             Effect: "Allow"
             Resource:
-              - {"Fn::Sub": [ "arn:aws:s3:::${BucketName}/*", { BucketName: { "Ref": "StaticContentsBucket" } } ] }
+              - {
+                  "Fn::Sub":
+                    [
+                      "arn:aws:s3:::${BucketName}/*",
+                      { BucketName: { "Ref": "StaticContentsBucket" } },
+                    ],
+                }
             Principal: "*"
 
-
+  StaticContentDestribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName:
+              Fn::Sub: "${ServiceDomainName}.s3.amazonaws.com"
+            Id: staticContentS3
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        Enabled: true
+        Comment: Some comment
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: staticContentS3
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: allow-all
+        PriceClass: PriceClass_200
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
 
   # --------------------------------------------------------
   # IAM Roles
@@ -187,4 +237,8 @@ Resources:
                   - dynamodb:PutItem
                 Resource:
                   - Fn::GetAtt: TaskTable.Arn
-                  - Fn::Sub: [ "${TableArn}/index/*", { TableArn: { "Fn::GetAtt": TaskTable.Arn } } ]
+                  - Fn::Sub:
+                      [
+                        "${TableArn}/index/*",
+                        { TableArn: { "Fn::GetAtt": TaskTable.Arn } },
+                      ]
