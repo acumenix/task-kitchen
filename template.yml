@@ -10,10 +10,6 @@ Parameters:
     Default: ""
   ServiceDomainName:
     Type: String
-  S3HostedZoneID:
-    Type: String
-  Region:
-    Type: String
 
 Conditions:
   LambdaRoleRequired:
@@ -145,6 +141,12 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
 
+  LoggingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: "${ServiceDomainName}.log"
+
   StaticContentsBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -154,15 +156,11 @@ Resources:
         Statement:
           - Action:
               - "s3:GetObject"
+              - "s3:ListBucket"
             Effect: "Allow"
             Resource:
-              - {
-                  "Fn::Sub":
-                    [
-                      "arn:aws:s3:::${BucketName}/*",
-                      { BucketName: { "Ref": "StaticContentsBucket" } },
-                    ],
-                }
+              - Fn::Sub: "arn:aws:s3:::${ServiceDomainName}/*"
+              - Fn::Sub: "arn:aws:s3:::${ServiceDomainName}"
             Principal: "*"
 
   StaticContentDestribution:
@@ -175,19 +173,41 @@ Resources:
             Id: staticContentS3
             S3OriginConfig:
               OriginAccessIdentity: ""
+          - DomainName:
+              Fn::Sub:
+                - "${apigId}.execute-api.${AWS::Region}.amazonaws.com"
+                - { apigId: { "Ref": "ApiGW" } }
+            Id: apiGateway
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
         Enabled: true
-        Comment: Some comment
+        Logging:
+          IncludeCookies: true
+          Bucket:
+            Fn::Sub: "${ServiceDomainName}.log.s3.amazonaws.com"
+          Prefix: CF
         DefaultRootObject: index.html
         DefaultCacheBehavior:
-          AllowedMethods:
-            - GET
-            - HEAD
+          AllowedMethods: ["GET", "HEAD"]
+          Compress: true
           TargetOriginId: staticContentS3
           ForwardedValues:
             QueryString: false
             Cookies:
               Forward: none
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - AllowedMethods:
+              ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: all
+              Headers:
+                - "*"
+            PathPattern: "/api/*"
+            TargetOriginId: apiGateway
+            ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_200
         ViewerCertificate:
           CloudFrontDefaultCertificate: true

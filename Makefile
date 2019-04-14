@@ -33,9 +33,7 @@ deploy: sam.yml
 		--stack-name $(STACK_NAME) \
 		--capabilities CAPABILITY_IAM \
  		--parameter-overrides \
-		  ServiceDomainName=$(SERVICE_DOMAIN_NAME) \
-		  S3HostedZoneID=$(S3_HOSTED_ZONE_ID) \
-		  Region=$(REGION)
+		  ServiceDomainName=$(SERVICE_DOMAIN_NAME)
 	npx webpack --optimize-minimize --config ./webpack.config.js
 	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/
 
