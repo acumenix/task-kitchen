@@ -36,7 +36,10 @@ deploy: sam.yml
 		  ServiceDomainName=$(SERVICE_DOMAIN_NAME)
 	npx webpack --optimize-minimize --config ./webpack.config.js
 	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/
+	$(MAKE) sync
 
-sync:
+static/js/bundle.js: javascript/*
 	npx webpack --optimize-minimize --config ./webpack.config.js
+
+sync: static/js/bundle.js static/**
 	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/

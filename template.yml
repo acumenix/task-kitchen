@@ -170,14 +170,14 @@ Resources:
         Origins:
           - DomainName:
               Fn::Sub: "${ServiceDomainName}.s3.amazonaws.com"
-            Id: staticContentS3
+            Id: staticOrigin
             S3OriginConfig:
               OriginAccessIdentity: ""
           - DomainName:
               Fn::Sub:
                 - "${apigId}.execute-api.${AWS::Region}.amazonaws.com"
                 - { apigId: { "Ref": "ApiGW" } }
-            Id: apiGateway
+            Id: apiOrigin
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
         Enabled: true
@@ -185,12 +185,13 @@ Resources:
           IncludeCookies: true
           Bucket:
             Fn::Sub: "${ServiceDomainName}.log.s3.amazonaws.com"
-          Prefix: CF
+          Prefix: cf-logs
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods: ["GET", "HEAD"]
           Compress: true
-          TargetOriginId: staticContentS3
+          DefaultTTL: 300
+          TargetOriginId: staticOrigin
           ForwardedValues:
             QueryString: false
             Cookies:
@@ -204,10 +205,13 @@ Resources:
               Cookies:
                 Forward: all
               Headers:
-                - "*"
+                - Authorization
             PathPattern: "/api/*"
-            TargetOriginId: apiGateway
+            TargetOriginId: apiOrigin
             ViewerProtocolPolicy: redirect-to-https
+            MaxTTL: 0
+            MinTTL: 0
+            DefaultTTL: 0
         PriceClass: PriceClass_200
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
