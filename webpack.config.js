@@ -33,7 +33,7 @@ module.exports = {
   devServer: {
     contentBase: "static",
     proxy: {
-      "/api": "http://localhost:8080"
+      "/api": "http://localhost:9080"
     }
   },
   plugins: [new VueLoaderPlugin()]

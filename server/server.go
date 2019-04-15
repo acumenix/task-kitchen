@@ -23,5 +23,5 @@ func main() {
 	v1 := r.Group("/api/v1")
 	api.SetupRouter(v1, os.Args[1], os.Args[2])
 
-	r.Run()
+	r.Run("127.0.0.1:9080")
 }
