@@ -7,6 +7,7 @@ CODE_S3_PREFIX := $(shell cat $(STACK_CONFIG) | jq '.["CodeS3Prefix"]' -r )
 STACK_NAME := $(shell cat $(STACK_CONFIG) | jq '.["StackName"]' -r )
 
 SERVICE_DOMAIN_NAME := $(shell cat $(STACK_CONFIG) | jq '.["ServiceDomainName"]' -r )
+SERVICE_CERT_ARN := $(shell cat $(STACK_CONFIG) | jq '.["ServiceCertArn"]' -r )
 S3_HOSTED_ZONE_ID := $(shell cat $(STACK_CONFIG) | jq '.["S3HostedZoneID"]' -r )
 REGION := $(shell cat $(STACK_CONFIG) | jq '.["Region"]' -r )
 
@@ -33,7 +34,8 @@ deploy: sam.yml
 		--stack-name $(STACK_NAME) \
 		--capabilities CAPABILITY_IAM \
  		--parameter-overrides \
-		  ServiceDomainName=$(SERVICE_DOMAIN_NAME)
+		  ServiceDomainName=$(SERVICE_DOMAIN_NAME) \
+		  ServiceCertArn=$(SERVICE_CERT_ARN)
 	npx webpack --optimize-minimize --config ./webpack.config.js
 	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/
 	$(MAKE) sync

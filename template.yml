@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: https://github.com/m-mizutani/gsuite-log-exporter
+Description: "Task Manager Serverless Applicaion"
 Parameters:
   DlqTopicName:
     Type: String
@@ -9,6 +9,8 @@ Parameters:
     Type: String
     Default: ""
   ServiceDomainName:
+    Type: String
+  ServiceCertArn:
     Type: String
 
 Conditions:
@@ -167,6 +169,8 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Aliases:
+          - Ref: ServiceDomainName
         Origins:
           - DomainName:
               Fn::Sub: "${ServiceDomainName}.s3.amazonaws.com"
@@ -214,7 +218,9 @@ Resources:
             DefaultTTL: 0
         PriceClass: PriceClass_200
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true
+          AcmCertificateArn:
+            Ref: ServiceCertArn
+          SslSupportMethod: sni-only
 
   # --------------------------------------------------------
   # IAM Roles
