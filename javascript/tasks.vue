@@ -27,6 +27,8 @@
           class="tomatos"
           @click.left.prevent="incrementTomato(task)"
           @click.right.prevent="decrimentTomato(task)"
+          @mouseenter="editTomato(task)"
+          @mouseleave="saveTomato(task)"
         >
           <span class="tomato" v-for="n in task.tomato_num" v-bind:key="n">🍅</span>
         </div>
@@ -90,7 +92,10 @@ function fetchTask() {
 fetchTask();
 
 function updateTask(task) {
-  if (task.prevTitle === task.title) {
+  if (
+    (task.prevTitle === undefined || task.prevTitle === task.title) &&
+    (task.prevTomatoNum === undefined || task.prevTomatoNum === task.tomato_num)
+  ) {
     return;
   }
 
@@ -121,13 +126,23 @@ function doneEdit(task) {
   updateTask(task);
 }
 
+// ==========================================
+// Tomato Control
+function editTomato(task) {
+  task.prevTomatoNum = task.tomato_num;
+}
+
+function saveTomato(task) {
+  updateTask(task);
+  task.prevTomatoNum = task.tomato_num;
+}
+
 function cancelEdit(task) {
   this.editTask = null;
   task.title = task.prevTitle;
 }
 
 function incrementTomato(task) {
-  console.log("inc", task.tomato_num);
   task.tomato_num++;
 }
 
@@ -135,7 +150,6 @@ function decrimentTomato(task) {
   if (task.tomato_num <= 0) {
     return;
   }
-  console.log("dec", task.tomato_num);
   task.tomato_num--;
 }
 
@@ -155,6 +169,8 @@ export default {
     editTask: editTask,
     doneEdit: doneEdit,
     cancelEdit: cancelEdit,
+    editTomato: editTomato,
+    saveTomato: saveTomato,
     incrementTomato: incrementTomato,
     decrimentTomato: decrimentTomato
   },

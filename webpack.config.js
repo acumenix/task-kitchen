@@ -6,7 +6,8 @@ module.exports = {
   entry: ["babel-polyfill", path.resolve("javascript", "index.js")],
   output: {
     filename: "bundle.js",
-    path: path.join(__dirname, "static/js/")
+    path: path.join(__dirname, "static/js/"),
+    publicPath: "/js"
   },
   module: {
     rules: [
