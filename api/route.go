@@ -1,10 +1,7 @@
 package api
 
 import (
-	"time"
-
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 type Response struct {
@@ -12,33 +9,22 @@ type Response struct {
 	Results interface{} `json:"results,omitempty"`
 }
 
-func getParam(params gin.Params, key string) string {
-	for _, p := range params {
-		if p.Key == key {
-			return p.Value
-		}
-	}
-
-	return ""
-}
-
-func getSpace(params gin.Params) (user string, ts time.Time, err error) {
-	if user = getParam(params, "user"); user == "" {
-		err = errors.New("user parameter is empty")
-		return
-	}
-
-	date := getParam(params, "date")
-	if ts, err = time.Parse("2006-01-02", date); err != nil {
-		Logger.WithError(err).Error("Format error")
-		err = errors.New("Invalid date format, should be like 2006-01-02")
-	}
-
-	return
-}
-
 func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	mgr := newKitchenManager(awsRegion, tableName)
+
+	// Report endpoints
+	r.GET("/:user", func(c *gin.Context) {
+		fetchReportHandler(c, &mgr)
+	})
+	r.GET("/:user/:date", func(c *gin.Context) {
+		getReportHandler(c, &mgr)
+	})
+	r.PUT("/:user/:date", func(c *gin.Context) {
+		updateReportHandler(c, &mgr)
+	})
+	r.DELETE("/:user/:date", func(c *gin.Context) {
+		deleteReportHandler(c, &mgr)
+	})
 
 	// Task Endpoint
 	r.GET("/:user/:date/task", func(c *gin.Context) {
@@ -52,6 +38,20 @@ func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	})
 	r.DELETE("/:user/:date/task/:task_id", func(c *gin.Context) {
 		deleteTaskHandler(c, &mgr)
+	})
+
+	// Chore endpoints
+	r.GET("/:user/:date/chore", func(c *gin.Context) {
+		fetchChoresHandler(c, &mgr)
+	})
+	r.POST("/:user/:date/chore", func(c *gin.Context) {
+		createChoreHandler(c, &mgr)
+	})
+	r.PUT("/:user/:date/chore/:chore_id", func(c *gin.Context) {
+		updateChoreHandler(c, &mgr)
+	})
+	r.DELETE("/:user/:date/chore/:chore_id", func(c *gin.Context) {
+		deleteChoreHandler(c, &mgr)
 	})
 
 	// Pomodoro Endpoint

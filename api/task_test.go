@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/m-mizutani/task-kitchen"
+	main "github.com/m-mizutani/task-kitchen/api"
 )
 
 func TestNewTask(t *testing.T) {

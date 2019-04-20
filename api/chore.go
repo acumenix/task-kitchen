@@ -11,14 +11,14 @@ import (
 )
 
 type Chore struct {
-	PKey        string    `dynamo:"pk"`
-	SKey        string    `dynamo:"sk"`
-	UserID      string    `dynamo:"user_id"`
-	ChoreID     string    `dynamo:"chore_id"`
-	CreatedAt   time.Time `dynamo:"created_at"`
-	Title       string    `dynamo:"title"`
-	Done        bool      `dynamo:"done"`
-	Description string    `dynamo:"description"`
+	PKey        string    `dynamo:"pk" json:"-"`
+	SKey        string    `dynamo:"sk" json:"-"`
+	UserID      string    `dynamo:"user_id" json:"user_id"`
+	ChoreID     string    `dynamo:"chore_id" json:"chore_id"`
+	CreatedAt   time.Time `dynamo:"created_at" json:"created_at"`
+	Title       string    `dynamo:"title" json:"title"`
+	Done        bool      `dynamo:"done" json:"done"`
+	Description string    `dynamo:"description" json:"description"`
 
 	table   dynamo.Table
 	deleted bool
@@ -44,6 +44,23 @@ func (x KitchenManager) NewChore(userID string, date time.Time) (*Chore, error) 
 	}
 
 	return &chore, nil
+}
+
+func (x KitchenManager) GetChore(userID string, date time.Time, ChoreID string) (*Chore, error) {
+	var Chore Chore
+	pk, sk := toChoreKey(userID, date, ChoreID)
+
+	if err := x.table.Get("pk", pk).Range("sk", dynamo.Equal, sk).One(&Chore); err != nil {
+		if err.Error() == "dynamo: no item found" {
+			return nil, nil
+		}
+
+		return nil, errors.Wrap(err, "Fail to get Chore")
+	}
+
+	Chore.table = x.table
+
+	return &Chore, nil
 }
 
 func (x KitchenManager) FetchChores(userID string, date time.Time) ([]Chore, error) {
