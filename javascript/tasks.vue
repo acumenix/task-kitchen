@@ -162,13 +162,11 @@ function decrimentTomato(task) {
 
 function enableSubmit(event) {
   appData.canSubmit = true;
-  console.log("enable", event);
   setTimeout(function() {
     appData.canSubmit = false;
   }, 200);
 }
 function isSubmitEnabled() {
-  console.log("submit", appData.canSubmit);
   if (appData.canSubmit) {
     appData.canSubmit = false;
     return true;

@@ -32,8 +32,13 @@ func getUser(params gin.Params) (string, error) {
 	return user, nil
 }
 
-func getTime(params gin.Params, key string) (time.Time, error) {
-	date := getParam(params, key)
+func getTime(c *gin.Context, key string) (time.Time, error) {
+	date, ok := c.GetQuery(key)
+	if !ok {
+		ts := time.Now()
+		return ts, fmt.Errorf("Missing query string: %s", key)
+	}
+
 	ts, err := time.Parse("2006-01-02", date)
 	if err != nil {
 		Logger.WithError(err).Error("Format error")
@@ -48,7 +53,13 @@ func getSpace(params gin.Params) (user string, ts time.Time, err error) {
 		return
 	}
 
-	ts, err = getTime(params, "date")
+	date := getParam(params, "date")
+	ts, err = time.Parse("2006-01-02", date)
+	if err != nil {
+		Logger.WithError(err).Error("Format error")
+		return "", ts, fmt.Errorf("Invalid date format '%s', should be like 2006-01-02", date)
+	}
+
 	return
 }
 
@@ -62,11 +73,11 @@ func fetchReportHandler(c *gin.Context, mgr *KitchenManager) {
 		c.JSON(400, Response{err.Error(), nil})
 	}
 
-	begin, err := getTime(c.Params, "begin")
+	begin, err := getTime(c, "begin")
 	if err != nil {
 		c.JSON(400, Response{err.Error(), nil})
 	}
-	end, err := getTime(c.Params, "end")
+	end, err := getTime(c, "end")
 	if err != nil {
 		c.JSON(400, Response{err.Error(), nil})
 	}

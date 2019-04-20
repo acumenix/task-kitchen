@@ -41,10 +41,28 @@ Resources:
             { Ref: LambdaRoleArn },
           ]
       Events:
-        GetAll:
+        GetReports:
           Type: Api
           Properties:
             Method: get
+            Path: /v1/{user}
+            RestApiId: { "Ref": "ApiGW" }
+        GetReport:
+          Type: Api
+          Properties:
+            Method: get
+            Path: /v1/{user}/{date}
+            RestApiId: { "Ref": "ApiGW" }
+        UpdateTask:
+          Type: Api
+          Properties:
+            Method: put
+            Path: /v1/{user}/{date}
+            RestApiId: { "Ref": "ApiGW" }
+        DeleteTask:
+          Type: Api
+          Properties:
+            Method: delete
             Path: /v1/{user}/{date}
             RestApiId: { "Ref": "ApiGW" }
 
@@ -132,8 +150,8 @@ Resources:
         - AttributeName: sk
           KeyType: RANGE
       ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+        ReadCapacityUnits: 3
+        WriteCapacityUnits: 3
 
   StaticContentsBucket:
     Type: AWS::S3::Bucket

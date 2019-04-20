@@ -28,4 +28,6 @@ func init() {
 	if err := json.Unmarshal(raw, &testCfg); err != nil {
 		log.Fatalf("Fail to unmarshal test config file: %s, %s", confPath, err)
 	}
+
+	runTestServer()
 }

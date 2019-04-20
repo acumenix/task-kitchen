@@ -8,12 +8,20 @@ import (
 	"github.com/pkg/errors"
 )
 
+type ReportStatus string
+
+const (
+	ReportEditing ReportStatus = "edit"
+	ReportWorking              = "work"
+	ReportDone                 = "done"
+)
+
 type Report struct {
-	PKey      string    `dynamo:"pk" json:"-"`
-	SKey      string    `dynamo:"sk" json:"-"`
-	UserID    string    `dynamo:"user_id" json:"user_id"`
-	CreatedAt time.Time `dynamo:"created_at" json:"created_at"`
-	Status    string    `dynamo:"status"`
+	PKey      string       `dynamo:"pk" json:"-"`
+	SKey      string       `dynamo:"sk" json:"-"`
+	UserID    string       `dynamo:"user_id" json:"user_id"`
+	CreatedAt time.Time    `dynamo:"created_at" json:"created_at"`
+	Status    ReportStatus `dynamo:"status"`
 
 	table dynamo.Table
 }
@@ -45,8 +53,7 @@ func (x KitchenManager) FetchReport(userID string, begin, end time.Time) ([]Repo
 	_, sk2 := toReportKey(userID, end)
 
 	err := x.table.Get("pk", pk).
-		Range("sk", dynamo.GreaterOrEqual, sk1).
-		Range("sk", dynamo.LessOrEqual, sk2).
+		Range("sk", dynamo.Between, sk1, sk2).
 		All(&reports)
 
 	if err != nil {
@@ -71,7 +78,7 @@ func (x KitchenManager) NewReport(userID string, date time.Time) (*Report, error
 		SKey:      sk,
 		UserID:    userID,
 		CreatedAt: date,
-		Status:    "edit",
+		Status:    ReportEditing,
 		table:     x.table,
 	}
 
@@ -83,8 +90,8 @@ func (x KitchenManager) NewReport(userID string, date time.Time) (*Report, error
 }
 
 func (x *Report) Save() error {
-	if x.Status != "edit" && x.Status != "work" && x.Status != "done" {
-		return fmt.Errorf("Invalid report status: %s", x.Status)
+	if x.Status != ReportEditing && x.Status != ReportWorking && x.Status != ReportDone {
+		return fmt.Errorf("Invalid report status: '%s'", x.Status)
 	}
 
 	if err := x.table.Put(x).Run(); err != nil {
