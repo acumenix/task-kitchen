@@ -10,6 +10,7 @@
         placeholder="What is your task?"
         v-model="newTaskTitle"
         @keyup.enter="newTask"
+        @keypress="enableSubmit"
       >
     </div>
     <div
@@ -32,8 +33,6 @@
         >
           <span class="tomato" v-for="n in task.tomato_num" v-bind:key="n">🍅</span>
         </div>
-
-        <!--   <div>{{ task.tomato_num }}</div> -->
       </div>
       <input
         class="edit"
@@ -42,7 +41,7 @@
         v-task-focus="task == editedTask"
         @blur="doneEdit(task)"
         @keyup.enter="doneEdit(task)"
-        @keyup.esc="cancelEdit(task)"
+        @keypress="enableSubmit"
       >
     </div>
   </div>
@@ -55,7 +54,10 @@ const user = "mizutani";
 const now = new Date();
 const today = dateFormat(now, "yyyy-mm-dd");
 
-function newTask() {
+function newTask(event) {
+  if (!isSubmitEnabled()) {
+    return;
+  }
   if (appData.newTaskTitle === "") {
     return;
   }
@@ -98,6 +100,7 @@ function updateTask(task) {
   ) {
     return;
   }
+  console.log(task);
 
   axios
     .put(`/api/v1/${user}/${today}/task/${task.task_id}`, task)
@@ -118,6 +121,10 @@ function editTask(task) {
 }
 
 function doneEdit(task) {
+  if (!isSubmitEnabled()) {
+    return;
+  }
+
   if (!this.editedTask) {
     return;
   }
@@ -153,11 +160,29 @@ function decrimentTomato(task) {
   task.tomato_num--;
 }
 
+function enableSubmit(event) {
+  appData.canSubmit = true;
+  console.log("enable", event);
+  setTimeout(function() {
+    appData.canSubmit = false;
+  }, 200);
+}
+function isSubmitEnabled() {
+  console.log("submit", appData.canSubmit);
+  if (appData.canSubmit) {
+    appData.canSubmit = false;
+    return true;
+  } else {
+    return false;
+  }
+}
+
 const appData = {
   tasks: [],
   errorMessage: "",
   newTaskTitle: "",
-  editedTask: null
+  editedTask: null,
+  canSubmit: false
 };
 
 export default {
@@ -172,7 +197,8 @@ export default {
     editTomato: editTomato,
     saveTomato: saveTomato,
     incrementTomato: incrementTomato,
-    decrimentTomato: decrimentTomato
+    decrimentTomato: decrimentTomato,
+    enableSubmit: enableSubmit
   },
   directives: {
     "task-focus": function(el, binding) {
