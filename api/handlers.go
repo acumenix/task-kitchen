@@ -98,7 +98,7 @@ func handle(hdlr handler, c *gin.Context, mgr *KitchenManager) {
 			c.JSON(userErr.code, Response{userErr.Error(), nil, reqID})
 		} else {
 			// System oriented error
-			c.JSON(500, Response{"Internal server errror", nil, reqID})
+			c.JSON(500, Response{"Internal server error", nil, reqID})
 		}
 	} else {
 		c.JSON(200, Response{"", result, reqID})
