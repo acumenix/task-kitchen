@@ -50,31 +50,22 @@ func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	})
 
 	// Pomodoro Endpoint
+	r.GET("/:user/:date/pomodoro", func(c *gin.Context) {
+		handle(fetchAllPomodoroHandler, c, &mgr)
+	})
 	r.GET("/:user/:date/pomodoro/:task_id", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		handle(fetchPomodoroHandler, c, &mgr)
 	})
-
+	r.GET("/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
+		handle(getPomodoroHandler, c, &mgr)
+	})
 	r.POST("/:user/:date/pomodoro/:task_id", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		handle(createPomodoroHandler, c, &mgr)
 	})
-
 	r.PUT("/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
+		handle(updatePomodoroHandler, c, &mgr)
 	})
-
 	r.DELETE("/:user/:date/pomodoro/:task_id/:pomodoro_id", func(c *gin.Context) {
-		Logger.WithField("param", c.Params).Info("Request")
-		c.JSON(200, gin.H{
-			"message": "delete pomodoro",
-		})
+		handle(deletePomodoroHandler, c, &mgr)
 	})
 }

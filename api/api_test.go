@@ -69,7 +69,7 @@ func httpRequest(method, path string, input interface{}, response interface{}) (
 	return resp.StatusCode, nil
 }
 
-func TestReport(t *testing.T) {
+func TestReportAPI(t *testing.T) {
 	type Report struct {
 		Results api.Report `json:"results,omitempty"`
 	}
@@ -144,7 +144,7 @@ func TestReport(t *testing.T) {
 	assert.Equal(t, "", resp5.Error)
 }
 
-func TestTask(t *testing.T) {
+func TestTaskAPI(t *testing.T) {
 	type Task struct {
 		Results api.Task `json:"results,omitempty"`
 	}
@@ -162,4 +162,58 @@ func TestTask(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 200, code)
 	assert.Equal(t, 0, len(tasks.Results))
+}
+
+func TestPomodoroAPI(t *testing.T) {
+	type Task struct {
+		Results api.Task `json:"results,omitempty"`
+	}
+	type Tasks struct {
+		Results []api.Task `json:"results,omitempty"`
+	}
+	type Pomodoro struct {
+		Results api.Pomodoro `json:"results,omitempty"`
+	}
+	type Pomodoros struct {
+		Results []api.Pomodoro `json:"results,omitempty"`
+	}
+	var (
+		code      int
+		err       error
+		task      Task
+		pomodoro  Pomodoro
+		pomodoros Pomodoros
+	)
+	uid := strings.Replace(uuid.New().String(), "-", "", -1)
+
+	code, err = httpRequest("GET", uid+"/1983-04-20/pomodoro", nil, &pomodoros)
+	require.NoError(t, err)
+	require.Equal(t, 200, code)
+	assert.Equal(t, 0, len(pomodoros.Results))
+
+	code, err = httpRequest("POST", uid+"/1983-04-20/task", nil, &task)
+	require.NoError(t, err)
+	require.Equal(t, 200, code)
+
+	code, err = httpRequest("POST", uid+"/1983-04-20/pomodoro/"+task.Results.TaskID, nil, &pomodoro)
+	require.NoError(t, err)
+	require.Equal(t, 200, code)
+
+	code, err = httpRequest("GET", uid+"/1983-04-20/pomodoro/"+task.Results.TaskID+"/"+pomodoro.Results.PomodoroID, nil, &pomodoro)
+	require.NoError(t, err)
+	require.Equal(t, 200, code)
+
+	code, err = httpRequest("GET", uid+"/1983-04-20/pomodoro/"+task.Results.TaskID+"/zatsu", nil, &pomodoro)
+	require.NoError(t, err)
+	require.Equal(t, 404, code)
+
+	// Remote task
+	code, err = httpRequest("DELETE", uid+"/1983-04-20/task/"+task.Results.TaskID, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 200, code)
+
+	// Pomodoro belong to deleted task should be hidden
+	code, err = httpRequest("GET", uid+"/1983-04-20/pomodoro/"+task.Results.TaskID+"/"+pomodoro.Results.PomodoroID, nil, &pomodoro)
+	require.NoError(t, err)
+	require.Equal(t, 404, code)
 }

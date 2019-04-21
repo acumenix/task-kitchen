@@ -14,10 +14,9 @@ type Pomodoro struct {
 	SKey       string `dynamo:"sk"`
 	PomodoroID string `dynamo:"pomorodo_id"`
 
-	Status      string    `dynamo:"status"`
-	StartedAt   time.Time `dynamo:"started_at"`
-	FinishedAt  time.Time `dynamo:"finished_at"`
-	IsScheduled bool      `dynamo:"is_scheduled"`
+	Status     string    `dynamo:"status"`
+	StartedAt  time.Time `dynamo:"started_at"`
+	FinishedAt time.Time `dynamo:"finished_at"`
 
 	table   dynamo.Table
 	deleted bool
@@ -27,6 +26,16 @@ func toPomodoroKey(userID string, date time.Time, taskID string, pomodoroID stri
 	pk := fmt.Sprintf("%s/pomodoro/%s", userID, date.Format("20060102"))
 	sk := fmt.Sprintf("%s/%s", taskID, pomodoroID)
 	return pk, sk
+}
+
+func (x *KitchenManager) fetchAllPomodoros(userID string, date time.Time) ([]Pomodoro, error) {
+	pk, _ := toPomodoroKey(userID, date, "", "")
+	var pomodoros []Pomodoro
+	if err := x.table.Get("pk", pk).All(&pomodoros); err != nil {
+		return nil, errors.Wrapf(err, "Fail to fetch all pomodoros: %s", pk)
+	}
+
+	return pomodoros, nil
 }
 
 func newPomodoro(task *Task) (*Pomodoro, error) {
@@ -62,6 +71,20 @@ func fetchPomodoros(task *Task) ([]Pomodoro, error) {
 	}
 
 	return pomodoros, nil
+}
+
+func getPomodoro(task *Task, pomodoroID string) (*Pomodoro, error) {
+	var pomodoro Pomodoro
+	pk, sk := toPomodoroKey(task.UserID, task.CreatedAt, task.TaskID, pomodoroID)
+	if err := task.table.Get("pk", pk).Range("sk", dynamo.Equal, sk).One(&pomodoro); err != nil {
+		if err.Error() == "dynamo: no item found" {
+			return nil, nil
+		}
+
+		return nil, errors.Wrapf(err, "Fail to get a pomodoro: %s %s", pk, sk)
+	}
+
+	return &pomodoro, nil
 }
 
 func (x *Pomodoro) Finish() error {

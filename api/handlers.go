@@ -115,11 +115,66 @@ func handle(hdlr handler, c *gin.Context, mgr *KitchenManager) {
 	Logger.WithFields(logrus.Fields{
 		"params": c.Params,
 		// "handler": hdlr,
-		"error": errMsg,
-		"code":  code,
-	}).Info("Finish request handling")
+		"code": code,
+	}).WithError(err).Info("Finish request handling")
 
 	c.JSON(code, Response{errMsg, response, reqID})
+}
+
+// ---
+// Routines
+// ---
+
+func getReportRoutine(c *gin.Context, mgr *KitchenManager) (*Report, error) {
+	user, ts, err := getSpace(c.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	report, err := mgr.GetReport(user, ts)
+	if err != nil {
+		return nil, err
+	} else if report == nil {
+		return nil, newUserError(404, "The report is not found")
+	}
+
+	return report, nil
+}
+
+func getTaskRoutine(c *gin.Context, mgr *KitchenManager) (*Task, error) {
+	user, ts, err := getSpace(c.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	taskID := getParam(c.Params, "task_id")
+	task, err := mgr.GetTask(user, ts, taskID)
+	if err != nil {
+		return nil, err
+	}
+	if task == nil {
+		return nil, newUserError(404, "Task not found: %s", taskID)
+	}
+
+	return task, nil
+}
+
+func getPomodoroRoutine(c *gin.Context, mgr *KitchenManager) (*Pomodoro, error) {
+	task, err := getTaskRoutine(c, mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	pomodoroID := getParam(c.Params, "pomodoro_id")
+	pomodoro, err := getPomodoro(task, pomodoroID)
+	if err != nil {
+		return nil, err
+	}
+	if pomodoro == nil {
+		return nil, newUserError(404, "Pomodoro not found")
+	}
+
+	return pomodoro, nil
 }
 
 // --------------------------------
@@ -165,22 +220,6 @@ func getReportHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) 
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	return report, nil
-}
-
-func getReportRoutine(c *gin.Context, mgr *KitchenManager) (*Report, error) {
-	user, ts, err := getSpace(c.Params)
-	if err != nil {
-		return nil, err
-	}
-
-	report, err := mgr.GetReport(user, ts)
-	if err != nil {
-		return nil, err
-	} else if report == nil {
-		return nil, newUserError(404, "The report is not found")
 	}
 
 	return report, nil
@@ -257,19 +296,9 @@ func createTaskHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error)
 }
 
 func updateTaskHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
-	user, ts, err := getSpace(c.Params)
+	task, err := getTaskRoutine(c, mgr)
 	if err != nil {
 		return nil, err
-	}
-
-	taskID := getParam(c.Params, "task_id")
-	task, err := mgr.GetTask(user, ts, taskID)
-	if err != nil {
-		return nil, err
-	}
-
-	if task == nil {
-		return nil, newUserError(404, "Task not found: %s", taskID)
 	}
 
 	var updatedTask Task
@@ -286,18 +315,9 @@ func updateTaskHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error)
 }
 
 func deleteTaskHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
-	user, ts, err := getSpace(c.Params)
+	task, err := getTaskRoutine(c, mgr)
 	if err != nil {
 		return nil, err
-	}
-
-	taskID := getParam(c.Params, "task_id")
-	task, err := mgr.GetTask(user, ts, taskID)
-	if err != nil {
-		return nil, err
-	}
-	if task == nil {
-		return nil, newUserError(404, "Task not found: %s", taskID)
 	}
 
 	if err := task.Delete(); err != nil {
@@ -391,6 +411,86 @@ func deleteChoreHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error
 	}
 
 	if err := chore.Delete(); err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// --------------------------------
+// Pomodoro endpoints
+// --------------------------------
+
+func fetchAllPomodoroHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
+	user, ts, err := getSpace(c.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	pomodoros, err := mgr.fetchAllPomodoros(user, ts)
+	if err != nil {
+		return nil, err
+	}
+
+	return pomodoros, nil
+}
+
+func fetchPomodoroHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
+	task, err := getTaskRoutine(c, mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := fetchPomodoros(task)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func getPomodoroHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
+	pomodoro, err := getPomodoroRoutine(c, mgr)
+	if err != nil {
+		return nil, err
+	}
+	return pomodoro, nil
+}
+
+func createPomodoroHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
+	task, err := getTaskRoutine(c, mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := newPomodoro(task)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func updatePomodoroHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
+	pomodoro, err := getPomodoroRoutine(c, mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := pomodoro.Finish(); err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func deletePomodoroHandler(c *gin.Context, mgr *KitchenManager) (interface{}, error) {
+	pomodoro, err := getPomodoroRoutine(c, mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := pomodoro.Delete(); err != nil {
 		return nil, err
 	}
 
