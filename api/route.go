@@ -4,54 +4,49 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Response struct {
-	Error   string      `json:"error,omitempty"`
-	Results interface{} `json:"results,omitempty"`
-}
-
 func SetupRouter(r *gin.RouterGroup, awsRegion, tableName string) {
 	mgr := newKitchenManager(awsRegion, tableName)
 
 	// Report endpoints
 	r.GET("/:user", func(c *gin.Context) {
-		fetchReportHandler(c, &mgr)
+		handle(fetchReportHandler, c, &mgr)
 	})
 	r.GET("/:user/:date", func(c *gin.Context) {
-		getReportHandler(c, &mgr)
+		handle(getReportHandler, c, &mgr)
 	})
 	r.PUT("/:user/:date", func(c *gin.Context) {
-		updateReportHandler(c, &mgr)
+		handle(updateReportHandler, c, &mgr)
 	})
 	r.DELETE("/:user/:date", func(c *gin.Context) {
-		deleteReportHandler(c, &mgr)
+		handle(deleteReportHandler, c, &mgr)
 	})
 
 	// Task Endpoint
 	r.GET("/:user/:date/task", func(c *gin.Context) {
-		getTasksHandler(c, &mgr)
+		handle(getTasksHandler, c, &mgr)
 	})
 	r.POST("/:user/:date/task", func(c *gin.Context) {
-		createTaskHandler(c, &mgr)
+		handle(createTaskHandler, c, &mgr)
 	})
 	r.PUT("/:user/:date/task/:task_id", func(c *gin.Context) {
-		updateTaskHandler(c, &mgr)
+		handle(updateTaskHandler, c, &mgr)
 	})
 	r.DELETE("/:user/:date/task/:task_id", func(c *gin.Context) {
-		deleteTaskHandler(c, &mgr)
+		handle(deleteTaskHandler, c, &mgr)
 	})
 
 	// Chore endpoints
 	r.GET("/:user/:date/chore", func(c *gin.Context) {
-		fetchChoresHandler(c, &mgr)
+		handle(fetchChoresHandler, c, &mgr)
 	})
 	r.POST("/:user/:date/chore", func(c *gin.Context) {
-		createChoreHandler(c, &mgr)
+		handle(createChoreHandler, c, &mgr)
 	})
 	r.PUT("/:user/:date/chore/:chore_id", func(c *gin.Context) {
-		updateChoreHandler(c, &mgr)
+		handle(updateChoreHandler, c, &mgr)
 	})
 	r.DELETE("/:user/:date/chore/:chore_id", func(c *gin.Context) {
-		deleteChoreHandler(c, &mgr)
+		handle(deleteChoreHandler, c, &mgr)
 	})
 
 	// Pomodoro Endpoint

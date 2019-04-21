@@ -52,7 +52,7 @@ func (x KitchenManager) GetChore(userID string, date time.Time, ChoreID string) 
 
 	if err := x.table.Get("pk", pk).Range("sk", dynamo.Equal, sk).One(&Chore); err != nil {
 		if err.Error() == "dynamo: no item found" {
-			return nil, nil
+			return nil, newUserError(404, "The item is not found")
 		}
 
 		return nil, errors.Wrap(err, "Fail to get Chore")

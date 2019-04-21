@@ -11,9 +11,12 @@ import (
 type ReportStatus string
 
 const (
+	// ReportEditing means the report is under editing.
 	ReportEditing ReportStatus = "edit"
-	ReportWorking              = "work"
-	ReportDone                 = "done"
+	// ReportWorking means the report is fixed.
+	ReportWorking = "work"
+	// ReportDone means works of the day has been finished, not tasks are completed.
+	ReportDone = "done"
 )
 
 type Report struct {
@@ -40,7 +43,7 @@ func (x KitchenManager) GetReport(userID string, date time.Time) (*Report, error
 		if err.Error() == "dynamo: no item found" {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Wrapf(err, "Fail to get report: %s %s", pk, sk)
 	}
 
 	report.table = x.table
@@ -91,7 +94,7 @@ func (x KitchenManager) NewReport(userID string, date time.Time) (*Report, error
 
 func (x *Report) Save() error {
 	if x.Status != ReportEditing && x.Status != ReportWorking && x.Status != ReportDone {
-		return fmt.Errorf("Invalid report status: '%s'", x.Status)
+		return newUserError(400, "Invalid report status: '%s'", x.Status)
 	}
 
 	if err := x.table.Put(x).Run(); err != nil {

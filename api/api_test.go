@@ -135,13 +135,13 @@ func TestReport(t *testing.T) {
 	report.Status = api.ReportStatus("invalid")
 	code, err = httpRequest("PUT", uid+"/2018-03-22", report, nil)
 	require.NoError(t, err)
-	assert.Equal(t, 500, code)
+	assert.Equal(t, 400, code)
 
 	var resp5 Error
 	code, err = httpRequest("DELETE", uid+"/2018-03-22", nil, &resp5)
 	require.NoError(t, err)
 	assert.Equal(t, 200, code)
-	assert.Equal(t, "ok", resp5.Error)
+	assert.Equal(t, "", resp5.Error)
 }
 
 func TestTask(t *testing.T) {
