@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // --------------------------------
@@ -92,17 +93,33 @@ type handler func(c *gin.Context, mgr *KitchenManager) (interface{}, error)
 func handle(hdlr handler, c *gin.Context, mgr *KitchenManager) {
 	reqID := uuid.New().String()
 	result, err := hdlr(c, mgr)
+	var code int
+	var errMsg string
+	var response interface{}
+
 	if err != nil {
 		if userErr, ok := err.(*userError); ok {
 			// User oriented error
-			c.JSON(userErr.code, Response{userErr.Error(), nil, reqID})
+			code = userErr.code
+			errMsg = userErr.Error()
 		} else {
 			// System oriented error
-			c.JSON(500, Response{"Internal server error", nil, reqID})
+			code = 500
+			errMsg = "Internal server error"
 		}
 	} else {
-		c.JSON(200, Response{"", result, reqID})
+		code = 200
+		response = result
 	}
+
+	Logger.WithFields(logrus.Fields{
+		"params": c.Params,
+		// "handler": hdlr,
+		"error": errMsg,
+		"code":  code,
+	}).Info("Finish request handling")
+
+	c.JSON(code, Response{errMsg, response, reqID})
 }
 
 // --------------------------------
