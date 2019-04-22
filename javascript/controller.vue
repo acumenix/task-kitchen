@@ -4,6 +4,36 @@
   </div>
 </template>
 <script>
+import axios from "axios";
+import dateFormat from "dateformat";
+
+const user = "mizutani";
+const now = new Date();
+const today = dateFormat(now, "yyyy-mm-dd");
+
+const appData = {
+  report: null
+};
+
+function getReport() {
+  axios
+    .get(`/api/v1/${user}/${today}`)
+    .then(function(response) {
+      // handle success
+      if (response.data.results !== null) {
+        appData.report = response.data.results;
+      }
+      console.log(response.data.results);
+    })
+    .catch(function(error) {
+      // handle error
+      console.log(error);
+      appData.errorMessage = "Error: " + error;
+    });
+}
+
+getReport();
+
 export default {
   data() {
     return {};
