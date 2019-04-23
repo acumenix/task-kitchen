@@ -8,7 +8,7 @@ STACK_NAME := $(shell cat $(STACK_CONFIG) | jq '.["StackName"]' -r )
 
 SERVICE_DOMAIN_NAME := $(shell cat $(STACK_CONFIG) | jq '.["ServiceDomainName"]' -r )
 SERVICE_CERT_ARN := $(shell cat $(STACK_CONFIG) | jq '.["ServiceCertArn"]' -r )
-S3_HOSTED_ZONE_ID := $(shell cat $(STACK_CONFIG) | jq '.["S3HostedZoneID"]' -r )
+APIGW_HOSTED_ZONE_ID := $(shell cat $(STACK_CONFIG) | jq '.["APIGWHostedZoneId"]' -r )
 REGION := $(shell cat $(STACK_CONFIG) | jq '.["Region"]' -r )
 
 TEMPLATE_FILE=template.yml
@@ -33,9 +33,10 @@ deploy: sam.yml
 		--template-file sam.yml \
 		--stack-name $(STACK_NAME) \
 		--capabilities CAPABILITY_IAM \
- 		--parameter-overrides \
+		--parameter-overrides \
 		  ServiceDomainName=$(SERVICE_DOMAIN_NAME) \
-		  ServiceCertArn=$(SERVICE_CERT_ARN)
+		  ServiceCertArn=$(SERVICE_CERT_ARN) \
+		  APIGWHostedZoneId=$(APIGW_HOSTED_ZONE_ID)
 	npx webpack --optimize-minimize --config ./webpack.config.js
 	aws --region $(REGION) s3 sync --exact-timestamps --delete static/ s3://$(SERVICE_DOMAIN_NAME)/
 	$(MAKE) sync

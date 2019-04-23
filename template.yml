@@ -12,6 +12,8 @@ Parameters:
     Type: String
   ServiceCertArn:
     Type: String
+  APIGWHostedZoneId:
+    Type: String
 
 Conditions:
   LambdaRoleRequired:
@@ -119,7 +121,40 @@ Resources:
   ApiGW:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: api
+      StageName: prod
+
+  ApiGwDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      CertificateArn:
+        Ref: ServiceCertArn
+      DomainName:
+        Ref: ServiceDomainName
+
+  ApiGwRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName:
+          Fn::Sub: "${ApiGW}.execute-api.${AWS::Region}.amazonaws.com"
+        HostedZoneId: Z1YSHQZHG15GKL
+      HostedZoneName:
+        Fn::Sub: "${ServiceDomainName}."
+      Name:
+        Fn::Sub: "${ServiceDomainName}."
+      Type: A
+
+  ApiGwMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      BasePath: ''
+      DomainName:
+        Ref: ServiceDomainName
+      RestApiId:
+        Ref: ApiGW
+      Stage:
+        Ref: ApiGW.Stage
+
 
   DLQ:
     Type: AWS::SNS::Topic
@@ -150,8 +185,8 @@ Resources:
         - AttributeName: sk
           KeyType: RANGE
       ProvisionedThroughput:
-        ReadCapacityUnits: 3
-        WriteCapacityUnits: 3
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
 
   StaticContentsBucket:
     Type: AWS::S3::Bucket
@@ -182,63 +217,6 @@ Resources:
               - Fn::Sub: "arn:aws:s3:::${ServiceDomainName}/*"
               - Fn::Sub: "arn:aws:s3:::${ServiceDomainName}"
             Principal: "*"
-
-  StaticContentDestribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Aliases:
-          - Ref: ServiceDomainName
-        Origins:
-          - DomainName:
-              Fn::Sub: "${ServiceDomainName}.s3.amazonaws.com"
-            Id: staticOrigin
-            S3OriginConfig:
-              OriginAccessIdentity: ""
-          - DomainName:
-              Fn::Sub:
-                - "${apigId}.execute-api.${AWS::Region}.amazonaws.com"
-                - { apigId: { "Ref": "ApiGW" } }
-            Id: apiOrigin
-            CustomOriginConfig:
-              OriginProtocolPolicy: https-only
-        Enabled: true
-        Logging:
-          IncludeCookies: true
-          Bucket:
-            Fn::Sub: "${ServiceDomainName}.log.s3.amazonaws.com"
-          Prefix: cf-logs
-        DefaultRootObject: index.html
-        DefaultCacheBehavior:
-          AllowedMethods: ["GET", "HEAD"]
-          Compress: true
-          DefaultTTL: 300
-          TargetOriginId: staticOrigin
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-              Forward: none
-          ViewerProtocolPolicy: redirect-to-https
-        CacheBehaviors:
-          - AllowedMethods:
-              ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-            ForwardedValues:
-              QueryString: true
-              Cookies:
-                Forward: all
-              Headers:
-                - Authorization
-            PathPattern: "/api/*"
-            TargetOriginId: apiOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            MaxTTL: 0
-            MinTTL: 0
-            DefaultTTL: 0
-        PriceClass: PriceClass_200
-        ViewerCertificate:
-          AcmCertificateArn:
-            Ref: ServiceCertArn
-          SslSupportMethod: sni-only
 
   # --------------------------------------------------------
   # IAM Roles
